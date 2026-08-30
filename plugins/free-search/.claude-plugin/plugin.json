@@ -1,0 +1,15 @@
+{
+  "name": "free-search",
+  "displayName": "Free Search",
+  "version": "0.10.0",
+  "description": "Local-first, no-API-key web search, fetching, and document reading — 11 MCP tools, no signup and no key.",
+  "author": {
+    "name": "ymylive",
+    "url": "https://github.com/sweetcornna"
+  },
+  "homepage": "https://github.com/sweetcornna/free-search-mcp#readme",
+  "repository": "https://github.com/sweetcornna/free-search-mcp",
+  "license": "MIT",
+  "keywords": ["mcp", "search", "web-search", "research", "fetch", "documents", "no-api-key"],
+  "mcpServers": "./.mcp.json"
+}

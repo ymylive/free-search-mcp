@@ -36,6 +36,14 @@ Claude Code:
 curl -LsSf https://raw.githubusercontent.com/sweetcornna/free-search-mcp/main/scripts/install.sh | bash -s -- --client claude-code
 ```
 
+Claude Code, as a plugin instead (no checkout, no `claude mcp add`; the plugin
+registers the same `search` stdio server, pinned to the plugin's version):
+
+```text
+/plugin marketplace add sweetcornna/free-search-mcp
+/plugin install free-search@free-search-mcp
+```
+
 Claude Desktop:
 
 ```bash

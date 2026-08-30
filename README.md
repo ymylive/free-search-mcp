@@ -47,6 +47,14 @@ claude mcp add search -- uvx free-search-mcp      # Claude Code
 codex mcp add search -- uvx free-search-mcp       # Codex
 ```
 
+Claude Code can install it as a **plugin** instead — same server, no
+`claude mcp add`, and `/plugin update` handles version bumps:
+
+```text
+/plugin marketplace add sweetcornna/free-search-mcp
+/plugin install free-search@free-search-mcp
+```
+
 Any other MCP client: point it at the command `uvx free-search-mcp` (stdio). The
 first run downloads the package from PyPI; every HTTP engine works with no
 further setup.
@@ -396,6 +404,31 @@ uvx --from free-search-mcp playwright install chromium   # browser-rendered engi
 uvx --from free-search-mcp search-mcp-admin               # bilingual config UI (opens browser)
 ```
 
+### Claude Code plugin
+
+```text
+/plugin marketplace add sweetcornna/free-search-mcp
+/plugin install free-search@free-search-mcp
+```
+
+The marketplace is this repo (`.claude-plugin/marketplace.json`); the plugin is
+`plugins/free-search`. Installing it registers exactly one thing — the stdio
+MCP server `search`, started as `uvx free-search-mcp==<plugin version>`. No
+skills, no hooks, no always-on prompt tokens. The pin is why the plugin version
+matches the package version: plugin `0.10.0` runs package `0.10.0`, and
+`/plugin update free-search` is what moves you to a newer server.
+
+Outside the TUI the same two steps are:
+
+```bash
+claude plugin marketplace add sweetcornna/free-search-mcp
+claude plugin install free-search@free-search-mcp -s user
+```
+
+Configuration is unchanged (`~/.config/search-mcp/.env`), and Chromium for the
+browser-rendered engines is still the one optional follow-up:
+`uvx --from free-search-mcp playwright install chromium`.
+
 ### One-click setup (source checkout)
 
 ```bash
@@ -477,9 +510,24 @@ uv run pytest -q                              # offline (default, no network)
 SEARCH_MCP_TEST_NETWORK=1 uv run pytest -v    # live tests, hit the real web
 ```
 
+### Releasing
+
+Cutting a version — the four files the version lives in (including the
+plugin's pinned package), the tag, PyPI, the GitHub Release, and what to
+verify afterwards: **[docs/RELEASING.md](docs/RELEASING.md)**.
+
 ---
 
 ## Wire into Claude Code
+
+As a plugin — one install, updates managed by Claude Code:
+
+```text
+/plugin marketplace add sweetcornna/free-search-mcp
+/plugin install free-search@free-search-mcp
+```
+
+Or as a plain MCP server:
 
 ```bash
 claude mcp add search -s user -- uvx free-search-mcp
@@ -543,6 +591,9 @@ system-prompt snippet, see [docs/AGENT_USAGE.md](docs/AGENT_USAGE.md).
 
 `uvx free-search-mcp` (PyPI) is the fastest path and needs no checkout — HTTP
 engines work immediately and Chromium is a single optional follow-up command.
+The Claude Code plugin wraps that same command with a pinned version, so what
+you installed and what you run cannot drift, and upgrading is `/plugin update`
+rather than re-running `claude mcp add`.
 `scripts/install.sh` remains the full bootstrap for people who want a source
 checkout, Chromium with OS deps, a smoke test, and client registration in one
 shot. Generic MCP installers still have their place: `add-mcp` can write
