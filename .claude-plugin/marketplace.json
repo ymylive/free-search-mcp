@@ -1,0 +1,25 @@
+{
+  "name": "free-search-mcp",
+  "owner": {
+    "name": "ymylive",
+    "url": "https://github.com/sweetcornna"
+  },
+  "metadata": {
+    "description": "The free-search-mcp project's own marketplace: one plugin, the search MCP server."
+  },
+  "plugins": [
+    {
+      "name": "free-search",
+      "source": "./plugins/free-search",
+      "description": "Local-first, no-API-key web search, fetching, and document reading — 11 MCP tools, no signup and no key.",
+      "keywords": [
+        "mcp",
+        "search",
+        "web-search",
+        "research",
+        "fetch",
+        "no-api-key"
+      ]
+    }
+  ]
+}

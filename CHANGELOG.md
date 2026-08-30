@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/), and the project follows
 semantic versioning.
 
+## [Unreleased]
+
+### Added
+
+- **Install as a Claude Code plugin.** `/plugin marketplace add
+  sweetcornna/free-search-mcp` followed by
+  `/plugin install free-search@free-search-mcp` registers the same `search`
+  stdio server with no `claude mcp add` line and no checkout. The marketplace
+  is `.claude-plugin/marketplace.json` in this repo; the plugin is
+  `plugins/free-search` and declares exactly one MCP server and nothing else —
+  no skills, no hooks, no always-on prompt tokens. Its `.mcp.json` pins
+  `free-search-mcp==<plugin version>`, so an installed plugin runs the package
+  it advertises, and `/plugin update free-search` is what moves a user to a
+  newer server.
+- **`docs/RELEASING.md`.** The release process was only ever encoded in
+  `.github/workflows/release.yml`; it is now written down, including the plugin
+  step it gained here — the four files a version lives in, why the pin has to
+  move in the same commit that bumps `pyproject.toml`, and how to verify PyPI,
+  the GitHub Release, and a real plugin install afterwards.
+  `tests/test_plugin_manifest.py` fails on any drift between the pin, the
+  plugin manifest and `pyproject.toml`, and the release workflow re-checks both
+  against the pushed tag before it builds anything.
+
 ## [0.10.0] - 2026-08-29
 
 Finance and scholarly literature get real sources instead of hostname filters,

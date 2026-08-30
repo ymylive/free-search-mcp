@@ -66,6 +66,26 @@ jobs:
           Path("release-notes.md").write_text(notes)
           PY
 
+          # The Claude Code plugin republishes this same server, so its
+          # manifest version and the package pin inside it are two more copies
+          # of the number the tag claims. A stale copy would hand plugin users
+          # a version this release never published.
+          python3 - "$version" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          expected = sys.argv[1]
+          plugin = Path("plugins/free-search")
+          manifest = json.loads((plugin / ".claude-plugin" / "plugin.json").read_text())
+          if manifest["version"] != expected:
+              raise SystemExit(f"plugin.json version {manifest['version']} != tag {expected}")
+          servers = json.loads((plugin / ".mcp.json").read_text())["mcpServers"]
+          pin = servers["search"]["args"]
+          if pin != [f"free-search-mcp=={expected}"]:
+              raise SystemExit(f"plugin .mcp.json runs {pin}, not free-search-mcp=={expected}")
+          PY
+
           # checkout fetches tags as lightweight refs, so the local ref may
           # point straight at the commit even when the pushed tag is annotated.
           # Re-fetch the tag object itself before judging what kind it is.
