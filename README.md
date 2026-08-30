@@ -136,7 +136,8 @@ stripping). Each fetched page also returns `author`, `published_date`, and
 `exclude_domains`, `category`, `include_text`, `exclude_text`. `category` also
 **routes** the query to sources that natively index it: a bare group
 (`news`/`pdf`/`github`/`paper`/`forum`/`blog`/`image`/`dataset`/`finance`)
-widens, and a dotted sub-group (`paper.biomed`, `finance.filings`, …) narrows
+widens, and a dotted sub-group (`paper.biomed`, `paper.math`,
+`finance.filings`, `dataset.repository`, `dataset.ml`, `dataset.gov`, …) narrows
 to just the sources that index it — see
 [Vertical sources](#vertical-sources-selected-automatically-by-category).
 
@@ -191,7 +192,7 @@ Plus **4 MCP prompts** (`Research thoroughly`, `Fact-check claim`,
 | `freshness` | `day` / `week` / `month` / `year` | Only results from the last N |
 | `include_domains` | `["python.org", "djangoproject.com"]` | Restrict to these domains |
 | `exclude_domains` | `["pinterest.com"]` | Remove these |
-| `category` | a group (`paper`, `finance`, `news`, …) or a sub-group (`paper.biomed`, `finance.filings`, …) | Routes to the sources that natively index that kind of thing; the enum in the tool schema lists every value |
+| `category` | a group (`paper`, `finance`, `news`, …) or a sub-group (`paper.biomed`, `paper.math`, `finance.filings`, `dataset.ml`, …) | Routes to the sources that natively index that kind of thing; the enum in the tool schema lists every value |
 | `include_text` | `"async"` | Substring required in title/snippet |
 | `exclude_text` | `"beginner"` | Substring forbidden |
 | `max_age_hours` | `24` | Override the 7-day default cache TTL on this call |
@@ -207,6 +208,9 @@ Every tool ships correct `readOnlyHint`, `idempotentHint`, and
 elevated actions.
 
 ### Engines
+
+The registry now contains 49 engines in total; the default pool remains the
+four all-HTTP engines below.
 
 Default set (all-HTTP, **no browser**):
 `duckduckgo`, `mojeek`, `googlenews`, `bing`.
@@ -248,10 +252,13 @@ Opt-in:
 
 Scholarly and financial sources are keyless too, and are normally reached via
 `category=` rather than by name: `arxiv`, `openalex`, `crossref`, `pubmed`,
-`europepmc`, `dblp`, `doaj`, `clinicaltrials`, `zenodo` — and `sec_edgar`,
-`yahoofinance`, `cninfo`, `worldbank`, `imf`. `semanticscholar` is registered
-alongside them but its anonymous pool answers 429 in practice, so it stays out
-of automatic routing until a (free) key is configured.
+`europepmc`, `dblp`, `doaj`, `clinicaltrials`, `zbmath` — and `sec_edgar`,
+`yahoofinance`, `cninfo`, `worldbank`, `imf`. Dataset sources are
+`dryad`, `dataverse`, `figshare`, `huggingface`, `dataeuropa`, and `zenodo`;
+the image sources are `openverse` and `wikimedia`. `semanticscholar` is
+registered alongside the scholarly sources but its anonymous pool answers 429
+in practice, so it stays out of automatic routing until a (free) key is
+configured.
 
 > All keyless engines stay **opt-in** — they're not in the fast default pool,
 > so the ~2x latency win of the all-HTTP defaults is preserved. Enable per
@@ -263,8 +270,8 @@ of automatic routing until a (free) key is configured.
 These index something a general web engine can't. You normally **don't name
 them** — passing `category=` to `search`/`research` routes to them. Sources are
 organised as **group → sub-group**: a bare group widens (one specialist per
-sub-group joins the web pool), a dotted sub-group narrows to exactly the
-sources that index it.
+sub-group joins the web pool until the engine cap), while a dotted sub-group
+narrows to that branch; the same cap still applies.
 
 | `category` | Engines | Why it matters |
 |---|---|---|
@@ -275,6 +282,7 @@ sources that index it.
 | `paper.cs` | `dblp` | Curated CS bibliography: exact venues, authors, DOIs |
 | `paper.openaccess` | `doaj`, `europepmc` | Every hit is free to read in full, so `read_doc` can open it |
 | `paper.trial` | `clinicaltrials` | Registered human trials — evidence the literature has not caught up with |
+| `paper.math` | `zbmath` | Mathematics literature with reviews and classification |
 | `finance` | one per sub-group, below | No general engine indexes filings, quotes or macro series |
 | `finance.filings` | `sec_edgar`, `cninfo` | Regulatory filings in full text (US, and A-share/HK) |
 | `finance.market` | `yahoofinance` | Ticker resolution plus market news for the resolved instrument |
@@ -282,12 +290,25 @@ sources that index it.
 | `github` | `github` (repos + issues/PRs), `github_code` (needs a token) | Real repository metadata, stars, last push |
 | `forum` | `stackexchange`, `hackernews` | Accepted-answer and score signals |
 | `news` / `news.world` | `googlenews`, `gdelt` | GDELT covers 100+ languages Google News never surfaces |
-| `image` | `openverse` | Openly-licensed images; results are direct file URLs, so `fetch(inline=True)` works on them |
-| `dataset` | `zenodo` | Datasets, software and their DOIs |
+| `image` | `openverse`, `wikimedia` | Openly-licensed images; results are direct file URLs, with Wikimedia attribution and source metadata |
+| `dataset` | one per sub-group, below | Datasets, software and open-data catalogues |
+| `dataset.repository` | `dryad`, `dataverse`, `zenodo`, `figshare` | Research datasets in public repositories, with DOI or landing-page metadata |
+| `dataset.ml` | `huggingface` | Machine-learning dataset repositories and dataset cards |
+| `dataset.gov` | `dataeuropa` | EU and member-state open-data catalogues in one index |
+
+At the default category-engine limit, `category="dataset"` selects
+`dryad`, `huggingface`, and `dataeuropa`—one source from each dataset
+sub-group. Use `dataset.repository`, `dataset.ml`, or `dataset.gov` when the
+sub-group is known; `category="paper"` remains `arxiv`, `openalex`, and
+`europepmc`, while `paper.math` reaches `zbmath` explicitly.
 
 `image` and `dataset` **replace** the default pool rather than adding to it —
 a web engine can't return an image file or a dataset record, so mixing it in
-only crowds out the source that can. The others augment it, capped by
+only crowds out the specialist sources that can. Before 0.11.0, each exclusive
+category had exactly one specialist (`openverse` or `zenodo`); now `image` has
+two sources and `dataset` has five across three sub-groups, so an outage, rate
+limit, or missed hit no longer leaves the category without a specialist
+fallback. The other groups augment the web pool, capped by
 `SEARCH_MCP_CATEGORY_ENGINE_LIMIT` (default 3). Because that cap is smaller
 than most groups, a bare group **round-robins across its sub-groups** before
 truncating: `category="paper"` spends its three slots on three different
@@ -700,6 +721,11 @@ Available knobs:
    │   hackernews/gdelt   │
    │   wikipedia/openlib. │
    │   openverse/zenodo   │
+   │   dryad/dataverse    │
+   │   figshare           │
+   │   huggingface        │
+   │   dataeuropa         │
+   │   wikimedia/zbmath   │
    └──────────────────────┘
 
    ┌────────────────────────────┐    ┌──────────────────┐

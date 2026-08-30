@@ -139,17 +139,29 @@ Google-style SERP coverage, and keyed engines such as `brave_api`, `serper`,
 
 **Prefer `category=` over naming engines.** It routes the query to sources that
 natively index that kind of content instead of filtering web results by
-hostname. Categories are two levels deep: a bare group widens, and a dotted
-sub-group narrows.
+hostname. Categories are two levels deep: use a bare group when the query may
+benefit from breadth across several sub-groups, and use a dotted sub-group when
+the content type is known and the query should stay in that branch. The
+category-engine limit (3 by default) still caps how many matching specialists
+run.
 
-- `category="paper"` reaches one specialist per scholarly sub-group; narrow
+- `category="paper"` chooses specialists across scholarly sub-groups; narrow
   with `paper.biomed`, `paper.cs`, `paper.preprint`, `paper.openaccess`,
-  `paper.trial` or `paper.index` when the field is known.
+  `paper.trial`, `paper.index`, or `paper.math` when the field is known. The
+  bare group deliberately keeps its existing spread of `arxiv`, `openalex`,
+  and `europepmc`; use `paper.math` specifically for `zbmath`.
 - `category="finance"` reaches filings, market data and macro research;
   narrow with `finance.filings`, `finance.market` or `finance.macro`.
 - `category="github"` reaches GitHub, `"forum"` reaches Stack Exchange and
-  Hacker News, `"news"` reaches Google News and GDELT, `"image"` reaches
-  Openverse, `"dataset"` reaches Zenodo.
+  Hacker News, and `"news"` reaches Google News and GDELT.
+- `category="image"` reaches `openverse` and `wikimedia`. It is an exclusive
+  category, so these specialist sources replace the general web pool.
+- `category="dataset"` spans repository, ML, and government sub-groups; with
+  the default three slots it selects `dryad`, `huggingface`, and `dataeuropa`.
+  Narrow with `dataset.repository` for the repository branch (`dryad`,
+  `dataverse`, `zenodo`, and `figshare`), `dataset.ml` for `huggingface`, or
+  `dataset.gov` for `dataeuropa`. It is also exclusive, so dataset specialists
+  replace the web pool rather than being padded with general web results.
 
 Call `engines()` for the live tree with a line on each source; it is derived
 from the registry, so it always matches what actually runs. Passing `engines=`
@@ -190,7 +202,7 @@ You have access to the `search` MCP server. Use `research` for broad
 source-backed answers, `search` for discovery, `fetch` for known URLs, `compare`
 for cross-source checks, `read_doc` for documents, and `paper_graph` to check or
 expand a specific paper's citations. Prefer `category=` (e.g. "paper.biomed",
-"finance.filings") over naming engines. Cite URLs for factual claims. Treat gated engines and empty results as diagnostic signals, not final
+"paper.math", "dataset.ml", "finance.filings") over naming engines. Cite URLs for factual claims. Treat gated engines and empty results as diagnostic signals, not final
 truth. Use default keyless engines first, and do not bypass CAPTCHAs or access
 controls.
 ```

@@ -4,7 +4,13 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/), and the project follows
 semantic versioning.
 
-## [Unreleased]
+## [0.11.0] - 2026-08-30
+
+`image` and `dataset` no longer replace the general pool with a single
+specialist source: this release adds redundancy to both exclusive categories,
+while `paper.math` adds the missing mathematics index without changing the
+existing paper spread. It also carries the Claude Code plugin, which makes
+this the first version installable without a `claude mcp add` line.
 
 ### Added
 
@@ -26,6 +32,48 @@ semantic versioning.
   `tests/test_plugin_manifest.py` fails on any drift between the pin, the
   plugin manifest and `pyproject.toml`, and the release workflow re-checks both
   against the pushed tag before it builds anything.
+- **Seven new keyless sources bring the registry from 42 to 49 engines.**
+  `dryad`, `dataverse`, `figshare`, `huggingface`, and `dataeuropa` add
+  repository, machine-learning, and EU public-sector dataset coverage;
+  `wikimedia` adds Wikimedia Commons image search; and `zbmath` adds a
+  mathematics literature index. None enters the default pool: each is reached
+  through `category=`, so ordinary web searches do not pay for the specialist
+  fan-out.
+- **Four new `Category` tokens expose the new branches.**
+  `dataset.repository`, `dataset.ml`, `dataset.gov`, and `paper.math` let a
+  caller narrow to a known kind of dataset or paper; `zenodo` now also declares
+  `dataset.repository`, putting all four repository sources in the same branch.
+- **Rejected candidates now have an explicit reason to stay out.** The source
+  probe rejected `data.gov` (the legacy CKAN endpoint returned 404 and its
+  replacement requires an API key), Eurostat, OECD, and UN UNdata (no working
+  keyless free-text search), IETF Datatracker (its accepted `search` parameter
+  is silently ignored), and Reddit (anonymous search returns 403 and current
+  API access requires OAuth). OSF Preprints and HAL are technically capable
+  adapters, but operator robots policy — not adapter capability — kept them
+  out.
+
+### Changed
+
+- **Bare dataset routing now spends its three slots across three different
+  sub-groups.** `category="dataset"` selects `dryad`, `huggingface`, and
+  `dataeuropa` — one repository, one ML, and one government source — instead of
+  three overlapping repositories. The full `dataset.repository` branch is
+  `dryad`, `dataverse`, `zenodo`, and `figshare`, while `dataset.ml` and
+  `dataset.gov` narrow to `huggingface` and `dataeuropa` respectively.
+- **The existing paper spread is deliberately preserved.**
+  `category="paper"` still selects `arxiv`, `openalex`, and `europepmc`; the
+  mathematics index is reached explicitly with `category="paper.math"`, so
+  `zbmath` does not displace one of the three existing corpora.
+
+### Fixed
+
+- **Exclusive image and dataset searches no longer have a single point of
+  failure.** Before this release, the general web pool was intentionally
+  replaced by exactly one specialist — `openverse` for `image` and `zenodo` for
+  `dataset`. An outage, rate limit, or missed hit therefore left no specialist
+  fallback and made source unavailability indistinguishable from no matching
+  item. `image` now has `openverse` and `wikimedia`, while `dataset` has five
+  sources across the repository, ML, and government sub-groups.
 
 ## [0.10.0] - 2026-08-29
 

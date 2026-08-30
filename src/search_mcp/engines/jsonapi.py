@@ -110,6 +110,11 @@ class JsonApiEngine(Engine):
     #: honest client identifier instead.
     impersonate: str | None = IMPERSONATE
 
+    #: TLS trust store. True uses curl_cffi's platform default; a source may
+    #: name an alternate maintained CA bundle when the default store lacks a
+    #: public root it needs. False is intentionally not used by any engine.
+    verify: bool | str = True
+
     def parse(self, html: str) -> list[SearchResult]:
         # Required by the ABC but unused: `search()` is overridden and never
         # routes a body through here. Returning [] keeps the never-raise rule
@@ -143,6 +148,7 @@ class JsonApiEngine(Engine):
                 timeout=settings.request_timeout,
                 allow_redirects=True,
                 headers=merged or None,
+                verify=self.verify,
                 **session_kwargs,
                 **curl_proxy_kwargs(self.name),
             ) as client:

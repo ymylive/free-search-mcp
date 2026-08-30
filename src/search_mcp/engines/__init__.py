@@ -18,16 +18,21 @@ from .brave_api import BraveApiEngine
 from .clinicaltrials import ClinicalTrialsEngine
 from .cninfo import CninfoEngine
 from .crossref import CrossrefEngine
+from .dataeuropa import DataEuropaEngine
+from .dataverse import DataverseEngine
 from .dblp import DblpEngine
 from .doaj import DoajEngine
+from .dryad import DryadEngine
 from .duckduckgo import DuckDuckGoEngine
 from .europepmc import EuropePmcEngine
+from .figshare import FigshareEngine
 from .gdelt import GdeltEngine
 from .github import GitHubCodeEngine, GitHubEngine
 from .google import GoogleEngine
 from .google_cse import GoogleCSEEngine
 from .googlenews import GoogleNewsEngine
 from .hackernews import HackerNewsEngine
+from .huggingface import HuggingFaceEngine
 from .imf import ImfEngine
 from .mojeek import MojeekEngine
 from .openalex import OpenAlexEngine
@@ -44,9 +49,11 @@ from .sogou import SogouEngine
 from .stackexchange import StackExchangeEngine
 from .startpage import StartpageEngine
 from .tavily import TavilyEngine
+from .wikimedia import WikimediaEngine
 from .wikipedia import WikipediaEngine
 from .worldbank import WorldBankEngine
 from .yahoofinance import YahooFinanceEngine
+from .zbmath import ZbMathEngine
 from .zenodo import ZenodoEngine
 from .zhihu import ZhihuEngine
 
@@ -86,14 +93,33 @@ ENGINES: dict[str, Engine] = {
     "dblp": DblpEngine(),
     "doaj": DoajEngine(),
     "clinicaltrials": ClinicalTrialsEngine(),
+    # Mathematics gets its own corpus without changing the deliberate bare
+    # paper top three (arxiv, openalex, europepmc). Putting zbMATH after every
+    # existing scholarly sub-group keeps that spread stable; callers that need
+    # it can narrow directly with `category="paper.math"`.
+    "zbmath": ZbMathEngine(),
     "github": GitHubEngine(),
     "stackexchange": StackExchangeEngine(),
     "hackernews": HackerNewsEngine(),
     "wikipedia": WikipediaEngine(),
     "openlibrary": OpenLibraryEngine(),
     "gdelt": GdeltEngine(),
+    # Image coverage keeps the broad aggregator first and adds Commons as an
+    # independent upstream, so an Openverse outage no longer empties this
+    # exclusive category.
     "openverse": OpenverseEngine(),
+    "wikimedia": WikimediaEngine(),
+    # Dataset order deliberately creates repository / ML / government buckets
+    # in that order. Round-robin then spends the default three-source budget on
+    # dryad, huggingface and dataeuropa instead of three overlapping
+    # repositories; Dryad leads repositories because it is dataset-only and
+    # returns the richest complete record in one request.
+    "dryad": DryadEngine(),
+    "huggingface": HuggingFaceEngine(),
+    "dataeuropa": DataEuropaEngine(),
+    "dataverse": DataverseEngine(),
     "zenodo": ZenodoEngine(),
+    "figshare": FigshareEngine(),
     # Chinese-language web indexes (HTML scrapes, best-effort like zhihu).
     "sogou": SogouEngine(),
     "so360": So360Engine(),

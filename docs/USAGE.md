@@ -84,6 +84,9 @@ output.
 `search` / `research` accept an `engines=[...]` list. Omit it to use the fast
 default pool. Every engine here is **keyless** (no API key, no account).
 
+The registry contains 49 engines in total; the default pool remains the four
+all-HTTP engines below.
+
 **Default pool** (all-HTTP, no browser):
 `duckduckgo`, `mojeek`, `googlenews`, `bing`.
 
@@ -109,15 +112,17 @@ reports it as `rescued_via`.
 | `openlibrary` | Open Library | book search |
 
 The scholarly and financial sources (`arxiv`, `openalex`, `crossref`,
-`pubmed`, `europepmc`, `dblp`, `doaj`, `clinicaltrials`, `zenodo`,
+`pubmed`, `europepmc`, `dblp`, `doaj`, `clinicaltrials`, `zbmath`,
 `sec_edgar`, `yahoofinance`, `cninfo`, `worldbank`, `imf`) are keyless too;
-reach them with `category=` rather than by name.
+reach them with `category=` rather than by name. Dataset sources are `dryad`,
+`dataverse`, `figshare`, `huggingface`, `dataeuropa`, and `zenodo`; image
+sources are `openverse` and `wikimedia`.
 
 ### Vertical sources — selected automatically by `category=`
 
 Not usually named directly. Sources are organised as **group → sub-group**: a
-bare group widens (one specialist per sub-group joins the pool), and a dotted
-sub-group narrows to exactly the sources that index it.
+bare group widens (one specialist per sub-group joins the pool until the engine
+cap), and a dotted sub-group narrows to that branch; the same cap still applies.
 
 | `category` | Engines | Notes |
 |---|---|---|
@@ -128,6 +133,7 @@ sub-group narrows to exactly the sources that index it.
 | `paper.cs` | `dblp` | curated CS bibliography — exact venue, authors, DOI |
 | `paper.openaccess` | `doaj`, `europepmc` | full text is free to read, so `read_doc` can open it |
 | `paper.trial` | `clinicaltrials` | registered trials, with phase / status / sponsor |
+| `paper.math` | `zbmath` | mathematics literature with reviews and classification |
 | `finance` | one per sub-group | filings, market data and macro answer different questions |
 | `finance.filings` | `sec_edgar`, `cninfo` | US regulatory filings; A-share / HK announcements |
 | `finance.market` | `yahoofinance` | ticker resolution + news about the resolved instrument |
@@ -135,15 +141,27 @@ sub-group narrows to exactly the sources that index it.
 | `github` | `github`, `github_code` (keyed) | repos + issues/PRs; code search needs a token |
 | `forum` | `stackexchange`, `hackernews` | accepted-answer / score signals |
 | `news`, `news.world` | `googlenews`, `gdelt` | GDELT covers 100+ languages; strictly rate-limited, skipped rather than queued |
-| `image` | `openverse` | CC-licensed; direct file URLs, usable with `fetch(inline=True)` |
-| `dataset` | `zenodo` | datasets, software, DOIs |
+| `image` | `openverse`, `wikimedia` | CC-licensed/direct file results; Wikimedia also returns attribution and source metadata |
+| `dataset` | one per sub-group | datasets, software, and open-data catalogues |
+| `dataset.repository` | `dryad`, `dataverse`, `zenodo`, `figshare` | public research-dataset repositories with DOI or landing-page metadata |
+| `dataset.ml` | `huggingface` | machine-learning dataset repositories and dataset cards |
+| `dataset.gov` | `dataeuropa` | EU and member-state open-data catalogues in one index |
+
+At the default category-engine limit, `category="dataset"` selects `dryad`,
+`huggingface`, and `dataeuropa`—one source from each dataset sub-group. Use a
+dotted token when the sub-group is known: `dataset.repository` for repository
+catalogues, `dataset.ml` for Hugging Face, `dataset.gov` for data.europa.eu, or
+`paper.math` for zbMATH. A bare group is broader and round-robins across its
+sub-groups before the cap truncates; `category="paper"` remains `arxiv`,
+`openalex`, and `europepmc`.
 
 `image` and `dataset` **replace** the default pool; the rest augment it (capped
-by `SEARCH_MCP_CATEGORY_ENGINE_LIMIT`, default 3). Because that cap is smaller
-than most groups, a bare group round-robins across its sub-groups before
-truncating, so `category="paper"` spends its three slots on three different
-corpora instead of three overlapping DOI indexes. Passing `engines=` disables
-the routing.
+by `SEARCH_MCP_CATEGORY_ENGINE_LIMIT`, default 3). A web engine cannot return an
+image file or a dataset record, so the exclusive categories keep only
+specialist sources. Before 0.11.0 that meant one source each; they now have two
+image sources and five dataset sources across three sub-groups, so one outage,
+rate limit, or missed hit no longer exhausts specialist search. Passing
+`engines=` disables the routing.
 
 Results from an engine that natively indexes the requested category count
 **double** in the rank fusion, so `category=` changes the ORDER too — not just
@@ -219,7 +237,7 @@ when an engine was gated. See **[PROXY_AND_GATES.md](PROXY_AND_GATES.md)**.
 | `freshness` | `day` / `week` / `month` / `year` | only results from the last N |
 | `include_domains` | `["python.org"]` | restrict to these domains |
 | `exclude_domains` | `["pinterest.com"]` | remove these |
-| `category` | a group (`news` / `pdf` / `github` / `paper` / `forum` / `blog` / `image` / `dataset` / `finance`) or a sub-group (`paper.biomed`, `finance.filings`, …) | content-type shortcut **and** routing signal — sends the query to sources that natively index it (see [Vertical sources](#vertical-sources--selected-automatically-by-category)) |
+| `category` | a group (`news` / `pdf` / `github` / `paper` / `forum` / `blog` / `image` / `dataset` / `finance`) or a sub-group (`paper.biomed`, `paper.math`, `finance.filings`, `dataset.repository`, `dataset.ml`, `dataset.gov`, …) | content-type shortcut **and** routing signal — sends the query to sources that natively index it (see [Vertical sources](#vertical-sources--selected-automatically-by-category)) |
 | `include_text` | `"async"` | substring required in title/snippet |
 | `exclude_text` | `"beginner"` | substring forbidden |
 | `max_age_hours` | `24` | override the 7-day cache TTL on this call |
@@ -228,6 +246,8 @@ when an engine was gated. See **[PROXY_AND_GATES.md](PROXY_AND_GATES.md)**.
 research("LLM eval frameworks", depth=3, freshness="month", category="paper")
 search("kubernetes operators", include_domains=["github.com"], category="github")
 search("CRISPR base editing", category="paper.preprint")
+search("graph neural network datasets", category="dataset.ml")
+search("Riemann hypothesis", category="paper.math")
 search("NVDA 10-K risk factors", category="finance.filings")
 paper_graph("10.1145/1571941.1572114")               # references + citing works
 ```
