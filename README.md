@@ -520,26 +520,38 @@ verify afterwards: **[docs/RELEASING.md](docs/RELEASING.md)**.
 
 ## Wire into Claude Code
 
-As a plugin — one install, updates managed by Claude Code:
+Three paths. They are not interchangeable — the first two run a *published*
+release, the third runs *your working tree*, so pick by what you are doing.
+
+**Using it — the plugin.** One install, updates handled by Claude Code, and the
+server is pinned to the version you installed:
 
 ```text
 /plugin marketplace add sweetcornna/free-search-mcp
 /plugin install free-search@free-search-mcp
 ```
 
-Or as a plain MCP server:
+**Using it without the plugin — a plain MCP registration.** The same published
+package, but it resolves to whatever PyPI holds at first launch, and nothing
+tells you when a newer version exists:
 
 ```bash
 claude mcp add search -s user -- uvx free-search-mcp
 ```
 
-From a source checkout instead: this repo ships a project-scoped `.mcp.json`,
-so running `claude` inside the project auto-detects the `search` server; or
-register the checkout globally:
+**Working on it — the project-scoped `.mcp.json` this repo ships.** Running
+`claude` inside the checkout auto-detects a `search` server started with
+`uv run search-mcp`, i.e. the code in front of you. That is the whole reason
+the file exists: neither the plugin nor the `uvx` line can ever show you your
+own edits. To reach a checkout from outside it:
 
 ```bash
 claude mcp add search -s user -- uv --directory /absolute/path/to/free-search-mcp run search-mcp
 ```
+
+The plugin and the checkout coexist without a name clash — Claude Code exposes
+the plugin's server as `plugin:free-search:search` — so inside this repo you can
+have both and still tell which one answered.
 
 ## Wire into Codex
 
