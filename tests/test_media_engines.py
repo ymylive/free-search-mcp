@@ -25,7 +25,19 @@ skip_offline = pytest.mark.skipif(
 )
 
 
-@pytest.mark.parametrize("name,category", [("openverse", "image"), ("zenodo", "dataset")])
+@pytest.mark.parametrize(
+    "name,category",
+    [
+        ("openverse", "image"),
+        ("wikimedia", "image"),
+        ("dryad", "dataset"),
+        ("dataverse", "dataset"),
+        ("figshare", "dataset"),
+        ("huggingface", "dataset"),
+        ("dataeuropa", "dataset"),
+        ("zenodo", "dataset"),
+    ],
+)
 def test_registered_with_its_category(name, category):
     assert name in ENGINES
     assert category in get_engine(name).categories
@@ -247,7 +259,7 @@ def test_image_and_dataset_replace_the_default_pool():
     assert "dataset" in _EXCLUSIVE_CATEGORIES
 
 
-async def test_image_search_uses_only_the_image_engine(monkeypatch):
+async def test_image_search_uses_only_the_image_engines(monkeypatch):
     from search_mcp import aggregator as agg
 
     used: list[str] = []
@@ -269,7 +281,7 @@ async def test_image_search_uses_only_the_image_engine(monkeypatch):
     monkeypatch.setattr(agg.settings, "rescue_enabled", False)
 
     await agg.aggregate_search("cats", category="image", max_results=3, use_cache=False)
-    assert used == ["openverse"]
+    assert used == ["openverse", "wikimedia"]
 
 
 async def test_paper_search_still_augments_the_default_pool(monkeypatch):

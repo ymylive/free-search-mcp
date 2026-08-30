@@ -28,7 +28,7 @@ class ZenodoEngine(JsonApiEngine):
 
     name = "zenodo"
     description = "Zenodo — CERN's repository of datasets, software and publications."
-    categories = frozenset({"dataset"})
+    categories = frozenset({"dataset", "dataset.repository"})
     # Zenodo answers 403 to clients presenting a browser TLS/header
     # fingerprint on its API. Identify honestly instead.
     impersonate = None

@@ -1,6 +1,6 @@
 [project]
 name = "free-search-mcp"
-version = "0.10.0"
+version = "0.11.0"
 description = "Local-first, no-API-key search MCP server. Multi-engine web search, smart fetching, document reading."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -35,6 +35,9 @@ dependencies = [
     # clients in documents.py / structured.py (curl_cffi handles socks natively).
     "httpx[socks]>=0.27",
     "curl-cffi>=0.7",
+    # Imported directly by zbMATH because curl_cffi's bundled CA store lacks
+    # the public root its current certificate chain needs.
+    "certifi>=2024.8.30",
     "selectolax>=0.3.21",
     "playwright>=1.47",
     "pypdf>=5.0",

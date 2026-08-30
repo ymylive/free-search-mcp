@@ -45,6 +45,7 @@ ACADEMIC = [
     "dblp",
     "doaj",
     "clinicaltrials",
+    "zbmath",
 ]
 
 
